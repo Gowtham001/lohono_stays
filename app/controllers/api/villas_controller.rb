@@ -5,7 +5,7 @@ class Api::VillasController < ApplicationController
 
   def index
     @villas = fetch_villas
-    render json: @villas
+    render json: { villas: @villas, per_page: params[:per_page], page: params[:page], total: @villas.total_entries}
   end
 
   def availability_details
@@ -15,18 +15,15 @@ class Api::VillasController < ApplicationController
   private
 
   def validate_index_params
-    params.permit(:from_date, :to_date, :name, :sort_by)
-
     @errors = []
     validate_from_date
     validate_to_date
     validate_sort_by
+    validate_page_params
     render_errors
   end
 
   def validate_availability_details_params
-    params.permit(:from_date, :to_date)
-    
     @errors = []
     validate_from_date
     validate_to_date
@@ -64,15 +61,25 @@ class Api::VillasController < ApplicationController
       end
 
       params[:sort_by] = { 'price' => 'avg_price',
-                           'date'  => 'stay_date' }[params[:sort_by]]
+                           'date'  => 'available_on' }[params[:sort_by]]
     else
-      params[:sort_by] = 'stay_date'
+      params[:sort_by] = 'available_on'
+    end
+  end
+
+  def validate_page_params
+    if !valid_number?(params[:page]) || params[:page].to_i < 1
+      params[:page] = 1
+    end
+
+    if !valid_number?(params[:per_page]) || params[:per_page].to_i < 20 || params[:per_page].to_i > 100
+      params[:per_page] = 20
     end
   end
 
   def render_errors
     if @errors.present?
-      render json: { message: errors.join(', ') }, status: 422
+      render json: { message: @errors.join(', ') }, status: 422
     end
   end
 
@@ -80,6 +87,10 @@ class Api::VillasController < ApplicationController
     Date.strptime(date_string, format) >= Date.today
   rescue ArgumentError
     false
+  end
+
+  def valid_number?(number)
+    number.to_s.match(/^(\d)+$/)
   end
 
   def validate_villa_presence
@@ -106,9 +117,10 @@ class Api::VillasController < ApplicationController
       @villas = @villas.order(params[:sort_by]) 
     end
 
-    @villas.select('villas.id,
+    @villas.paginate(per_page: params[:per_page], page: params[:page])
+           .select('villas.id,
                     villas.name,
                     AVG(price) avg_price,
-                    (ARRAY_AGG(stay_date order by stay_date))[1:5] stay_date')
+                    (ARRAY_AGG(stay_date order by stay_date))[1:10] available_on')
   end
 end

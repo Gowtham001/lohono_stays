@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_18_125752) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_19_083536) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_18_125752) do
     t.datetime "deleted_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["available", "stay_date"], name: "index_calenders_on_available_and_stay_date"
     t.index ["villa_id"], name: "index_calenders_on_villa_id"
   end
 
