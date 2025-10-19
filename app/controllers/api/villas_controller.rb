@@ -68,11 +68,14 @@ class Api::VillasController < ApplicationController
   end
 
   def validate_page_params
-    if !valid_number?(params[:page]) || params[:page].to_i < 1
+    params[:page] = params[:page].to_i
+    params[:per_page] = params[:per_page].to_i
+
+    if !valid_number?(params[:page]) || params[:page] < 1
       params[:page] = 1
     end
 
-    if !valid_number?(params[:per_page]) || params[:per_page].to_i < 20 || params[:per_page].to_i > 100
+    if !valid_number?(params[:per_page]) || params[:per_page] < 20 || params[:per_page] > 100
       params[:per_page] = 20
     end
   end
